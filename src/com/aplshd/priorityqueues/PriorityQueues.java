@@ -15,7 +15,7 @@ public class PriorityQueues {
 	static BinaryHeap binaryHeap = null;
 	static BinomialHeap binomialHeap = null;
 	static FibonacciHeap fibonacciHeap = null;
-	
+	Object heap;
 	public static void main(String args[]) {
 		switch(args[0]) {
 			case BINARY:
@@ -51,6 +51,14 @@ public class PriorityQueues {
 		        
 		        switch(menuInput) {
 		        	case 1:
+		        		System.out.println("Enter the key");
+		        		isr = new InputStreamReader(System.in);
+						br = new BufferedReader(isr);
+						s = br.readLine();
+						df = new DecimalFormat();
+						n = df.parse(s);
+						double  key = n.intValue();
+						binomialHeap.insert(key);
 		        		break;
 		        		
 		        	case 2:
@@ -59,7 +67,7 @@ public class PriorityQueues {
 		        	case 3:
 		        		break;
 		        		
-		        	case 4:
+		        	case 4:System.out.println(binomialHeap.findMin()+"");
 		        		break;
 		        		
 		        	case 5:
@@ -69,9 +77,19 @@ public class PriorityQueues {
 		        		break;
 		        		
 		        	case 7:
+		        		System.out.println("Enter the filename");
+		        		isr = new InputStreamReader(System.in);
+						br = new BufferedReader(isr);
+						s = br.readLine();
+						String fileName = s.trim();
+						if(fileName != null)
+							binomialHeap.displayHeap(fileName);
+						else
+							System.out.println("Error Opening File");
 		        		break;
 		        		
 		        	case 8:
+		        		br.close();
 		        		System.exit(0);
 		        		
 		        	default:
@@ -81,7 +99,7 @@ public class PriorityQueues {
 			} catch (ParseException ex) {
 		    	System.out.println("Wrong input...");
 		    } catch (IOException ex) {
-		    	System.out.println("IOException");
+		    	System.out.println("IOException" + ex);
 		    }
 	        
 		}
