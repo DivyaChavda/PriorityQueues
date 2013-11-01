@@ -1,9 +1,13 @@
 package com.aplshd.priorityqueues;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
 import java.util.Vector;
 
 /**
@@ -14,7 +18,7 @@ public class BinomialHeap {
 	/**
 	 * The head of the singly linked root list of BinomialHeap.
 	 */
-	private Node head;
+	public Node head;
 
 	/** Creates an empty binomial heap. */
 	public BinomialHeap() {
@@ -35,39 +39,76 @@ public class BinomialHeap {
 	 * @param key
 	 */
 	public void delete(double key) {
-		
+		Node x = findNode(head, key);
+		if (x == null) {
+			if (head == null){
+				System.out.println("The Priority Queue is Empty");
+				return;
+			}
+			else{
+				System.out.println("Key Not found");
+			return;
+			}
+		}
+		// Bubble x up to be a root, which is what would happen if we
+		// could decrease its key to negative infinity. Because the
+		// contents of nodes change during bubbleUp, the node
+		// containing x's contents may change, and so we have to
+		// update x.
+		x = fetchUp(x, true);
+
+		// Now remove x from the root list.
+		if (head == x)
+			removeFromRootList(x, null); // easy case
+		else {
+			// Find x's predecessor.
+			Node pred = head;
+			while (pred.sibling != x)
+				pred = pred.sibling;
+
+			// At this point, pred.sibling is x, so pred is x's
+			// predecessor.
+			removeFromRootList(x, pred);
+		}
+		System.out.println(" Key " + key
+				+ " deleted successfully.");
 	}
+
 	/**
-	 * This is to fetch key up 
-	 * @param u the node to fetchup
-	 * @param r if true fetch upto the root 
-	 * 			otherwise till its value is 
-	 * 			less than or equal to its parent
+	 * This is to fetch key up
+	 * 
+	 * @param u
+	 *            the node to fetchup
+	 * @param r
+	 *            if true fetch upto the root otherwise till its value is less
+	 *            than or equal to its parent
 	 * @return
 	 */
-	public Node fetchUp(Node u, boolean r){
+	public Node fetchUp(Node u, boolean r) {
 		Node a = u;
 		Node b = a.parent;
-		
-		while ( b != null && (r || a.key < b.key )){
-			//Exchange the key values of two nodes
+
+		while (b != null && (r || a.key < b.key)) {
+			// Exchange the key values of two nodes
 			double temp = a.key;
 			a.key = b.key;
 			b.key = temp;
-			
-			
-			Node temp1 =b;
-			Node temp2 = a;
-			a = temp1;
-			b = temp2;
-			
+
+			a.handle.node = b;
+			b.handle.node = a;
+
+			Handle aHandle = a.handle;
+			a.handle = b.handle;
+			b.handle = aHandle;
+
 			// Go up one more level.
 			a = b;
 			b = a.parent;
-			
+
 		}
 		return a;
 	}
+
 	/**
 	 * inserts the element
 	 * 
@@ -127,7 +168,8 @@ public class BinomialHeap {
 		else {
 			Node min = head; // min takes the role of both min and y
 			Node x = min.sibling;
-
+			if (min != null && min.sibling == null && min.child == null)
+				return min;
 			while (x != null) {
 				if (x.key < min.key)
 					min = x;
@@ -136,6 +178,12 @@ public class BinomialHeap {
 
 			return min;
 		}
+	}
+
+	public double findMinKey() {
+		if (findMin() == null)
+			return (Double) null;
+		return this.findMin().key;
 	}
 
 	private BinomialHeap union(BinomialHeap heap) {
@@ -200,8 +248,8 @@ public class BinomialHeap {
 			Node head; // head of merged list
 			Node tail; // last node added to merged list
 			Node h1Next = heap1.head, h2Next = heap2.head; // next nodes to be
-															// examined in h1
-															// and h2
+			// examined in h1
+			// and h2
 
 			if (heap1.head.degree <= heap2.head.degree) {
 				head = heap1.head;
@@ -246,9 +294,8 @@ public class BinomialHeap {
 	 * @param x
 	 *            The node to remove from the root list.
 	 * @param pred
-	 *            The predecessor of <code>x</code> in the root list, or
-	 *            <code>null</code> if <code>x</code> is the first node in the
-	 *            root list.
+	 *            The predecessor of x in the root list, or null if x is the
+	 *            first node in the root list.
 	 */
 	private void removeFromRootList(Node x, Node pred) {
 		// Splice out x.
@@ -264,6 +311,7 @@ public class BinomialHeap {
 		Node z = x.child;
 		while (z != null) {
 			Node next = z.sibling;
+			z.parent = null;
 			z.sibling = h.head;
 			h.head = z;
 			z = next;
@@ -271,6 +319,16 @@ public class BinomialHeap {
 
 		BinomialHeap newHeap = (BinomialHeap) this.union(h);
 		head = newHeap.head;
+		Node j=head;
+		while(j!=null){
+			if(j.parent == x){
+				j.parent= null;
+			}
+			if(j.sibling == x){
+				j.sibling = null;
+			}
+			j=j.sibling;
+		}
 	}
 
 	/**
@@ -278,22 +336,84 @@ public class BinomialHeap {
 	 * 
 	 * @param key
 	 */
-	void decrease(double key) {
-		/*
-		 * Node x = findNode(key);
-		 * 
-		 * // Make sure that the key value does not increase. if
-		 * (k.compareTo(x.object.getKey()) > 0) throw new KeyUpdateException();
-		 * 
-		 * x.object.setKey(k); // update x's key bubbleUp(x, false); // bubble
-		 * it up until it's in the right place
-		 */
+	void decrease(double key1, double key2) {
+
+		Node x = findNode(head, key1);
+		if (x == null) {
+			if (head == null)
+				System.out.println("The Priority Queue is Empty");
+			else
+				System.out.println("Key Not found");
+			return;
+		}
+		x.key = key2; // update x's key
+		fetchUp(x, false); // Move it up until it's in the right place
+
 	}
 
-	@SuppressWarnings("unused")
-	private Node findNode(double key) {
+	void increase(double key1, double key2) {
+		Node x = findNode(head, key1);
+		if (x == null) {
+			if (head == null)
+				System.out.println("The Priority Queue is Empty");
+			else
+				System.out.println("Key Not found");
+			return;
+		}
+		x.key = key2;// update x's key
+		pushDown(x, false);// Move it down until it's in the right place
+	}
 
-		Node n = this.head;
+	private Node pushDown(Node x, boolean r) {
+		Node a = x;
+		Node b = a.child;
+
+		while (b != null && (r || a.key > b.key)) {
+			// Exchange the key values of two nodes
+			double temp = a.key;
+			a.key = b.key;
+			b.key = temp;
+
+			a.handle.node = b;
+			b.handle.node = a;
+
+			Handle aHandle = a.handle;
+			a.handle = b.handle;
+			b.handle = aHandle;
+
+			// Go down by one more level.
+			a = b;
+			b = a.child;
+
+		}
+		return a;
+	}
+
+	public Node findNode(Node h, double key) {
+
+		if (h == null) {
+			return null;
+		}
+		Node n = h;
+
+		if (n.key == key) {
+			System.out.println("The node visited is " + n.key);
+			return n;
+		}
+		n = findNode(h.sibling, key);
+		if (n != null)
+			return n;
+		n = findNode(h.child, key);
+		if (n != null)
+			return n;
+
+		/*
+		 * while (n.sibling != null) { if ((n = findNode(n.sibling, key)) !=
+		 * null) return n; }
+		 * 
+		 * while (n.child != null) { if ((n = findNode(n.child, key)) != null)
+		 * return n; }
+		 */
 
 		return null;
 	}
@@ -305,14 +425,18 @@ public class BinomialHeap {
 	 * @param fileName
 	 */
 	void displayHeap(String fileName) {
-
+		if (this.head == null) {
+			System.out.println("The Priority Queue is Empty");
+			return;
+		}
 		PrintWriter out = null;
 		try {
 			out = new PrintWriter(new BufferedWriter(new FileWriter(fileName,
-					true)));
-			out.println("Graph BinomialHeap {");
-			System.out.println("Graph BinomialHeap {");
+					false)));
+			out.println("digraph BinomialHeap {");
+			System.out.println("digraph BinomialHeap {");
 			dfs(this.head, out);
+			printRank(this.head, out, true);
 			out.println("}");
 			System.out.println("}");
 		} catch (IOException e) {
@@ -328,46 +452,60 @@ public class BinomialHeap {
 		}
 	}
 
-	private void dfs(Node head2, PrintWriter out) {
+	private void printRank(Node head2, PrintWriter out, boolean flag) {
 
+		String p = "";
+		Node n = head2;
+		while (n != null && flag) {
+			p = p + n.key + " ";
+			n = n.sibling;
+		}
+		n = head2;
+		if (flag)
+			out.println("{ rank=same; " + p + " }");
+
+		if (n.child != null) {
+			printRank(n.child, out, true);
+		}
+		if (n.sibling != null) {
+			printRank(n.sibling, out, false);
+		}
+	}
+
+	private void dfs(Node head2, PrintWriter out) {
+		Node n = head2;
 		if (head2 == null)
 			return;
-		while (head2.child != null && head2.child.color.equals("WHITE")) {
-
-			dfs(head2.child, out);
-		}
 		dfs_visit(head2, out);
-		while (head2.sibling != null && !(head2.sibling.color.equals("BLACK"))) {
-
-			dfs(head2.sibling, out);
-			head2.sibling.color = "BLACK";
-		}
-		if (head2.parent == null && head2.child == null) {
-
-		}
+		dfs(n.child, out);
+		dfs(n.sibling, out);
 	}
 
 	private void dfs_visit(Node vSibling, PrintWriter out) {
 
 		if (vSibling.child != null) {
-			out.println(vSibling.key + "--" + vSibling.child.key
+			out.println(vSibling.key + "  ->  " + vSibling.child.key
 					+ " [color=blue label=child] ;");
-			System.out.println(vSibling.key + "--" + vSibling.child.key
+			System.out.println(vSibling.key + "  ->  " + vSibling.child.key
 					+ " [color=blue label=child] ;");
 		}
 		if (vSibling.sibling != null) {
-			out.println(vSibling.key + "--" + vSibling.sibling.key
+			out.println(vSibling.key + "  ->  " + vSibling.sibling.key
 					+ " [color=green style=dashed label=sibling] ;");
-			System.out.println(vSibling.key + "--" + vSibling.sibling.key
+			System.out.println(vSibling.key + "  ->  " + vSibling.sibling.key
 					+ " [color=green style=dashed  label=sibling] ;");
 		}
 		if (vSibling.parent != null) {
-			out.println(vSibling.key + "--" + vSibling.parent.key
-					+ " [color=black style=dotted label=parent] ;");
-			System.out.println(vSibling.key + "--" + vSibling.parent.key
+			out.println(vSibling.key + "  ->  " + vSibling.parent.key
+					+ " [color=black  label=parent] ;");
+			System.out.println(vSibling.key + "  ->  " + vSibling.parent.key
 					+ " [color=black style=dotted label=parent] ;");
 		}
-		vSibling.color = "GREY";
+		if(vSibling.child == null && vSibling.sibling == null && vSibling.parent == null){
+			out.println(vSibling.key+"");
+			System.out.println(vSibling.key+"");
+		}
+
 	}
 
 	/** Inner class for a node within a binomial heap. */
@@ -389,11 +527,6 @@ public class BinomialHeap {
 		 * right sibling.
 		 */
 		Node sibling;
-		/**
-		 * This is color used while traversing the heap while printing with
-		 * Depth First Search Traversal
-		 */
-		String color;
 		/** A handle to this node. */
 		public Handle handle;
 
@@ -409,7 +542,6 @@ public class BinomialHeap {
 			child = null;
 			sibling = null;
 			degree = 0;
-			color = "WHITE";
 			handle = new Handle(this);
 		}
 
@@ -427,13 +559,60 @@ public class BinomialHeap {
 		}
 	}
 
-	private static class Stack {
-		double n;
-		int rank;
+	/*
+	 * private static class Stack { double n; int rank;
+	 * 
+	 * Stack(double a, int b) { n = a; rank = b; } }
+	 */
 
-		Stack(double a, int b) {
-			n = a;
-			rank = b;
+	public void enterFilename(String inputFileName) {
+
+		try {
+			FileReader fr = new FileReader(inputFileName);
+			if (fr == null) {
+				System.out.println("File Error");
+				return;
+			}
+			BufferedReader in = new BufferedReader(fr);
+			String str = in.readLine();
+			String[] token;
+			token = str.split(" ");
+			int i = 0;
+			while (i < token.length) {
+				double d = Double.parseDouble(token[i]);
+				this.insert(d);
+				i++;
+			}
+			in.close();
+		} catch (IOException e) {
+			System.out.println(e);
 		}
 	}
+
+	public boolean isEmpty() {
+		if (head == null)
+			return true;
+		else
+			return false;
+	}
+
+	public void findN(double key) {
+		Node n = null;
+		n = findNode(head, key);
+		if (n != null)
+			System.out.println("key=" + n.key);
+		else {
+			System.out.println("Not Found");
+		}
+	}
+
+	public void updateKey(double key1, double key2) {
+		if (key1 > key2)
+			decrease(key1, key2);
+		else
+			increase(key1, key2);
+		
+		
+	}
+
 }

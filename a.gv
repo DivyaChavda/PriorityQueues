@@ -1,0 +1,16 @@
+digraph BinomialHeap {
+300.0  ->  32.0 [color=green style=dashed label=sibling] ;
+32.0  ->  33.0 [color=blue label=child] ;
+32.0  ->  27.0 [color=green style=dashed label=sibling] ;
+33.0  ->  32.0 [color=black  label=parent] ;
+27.0  ->  39.0 [color=blue label=child] ;
+39.0  ->  99.0 [color=blue label=child] ;
+39.0  ->  37.0 [color=green style=dashed label=sibling] ;
+39.0  ->  27.0 [color=black  label=parent] ;
+99.0  ->  39.0 [color=black  label=parent] ;
+37.0  ->  27.0 [color=black  label=parent] ;
+{ rank=same; 300.0 32.0 27.0  }
+{ rank=same; 33.0  }
+{ rank=same; 39.0 37.0  }
+{ rank=same; 99.0  }
+}
